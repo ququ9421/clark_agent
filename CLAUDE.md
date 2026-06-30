@@ -61,6 +61,7 @@ my_qa_agent/
 | `mock-config-generator` | 扫描源码自动生成三层 Mock 配置；L1 MSW Handler（HTTP 拦截）/ L2 MockLanguageModelV2+Langfuse 录制回放（LLM）/ L3 Drizzle seed 脚本（数据层）；零侵入不修改业务代码 |
 | `unit-test-generator` | 4 种方法（等价类/边界值/分支路径覆盖/异常场景）生成单元测试；框架自动检测；8 种 Mock 策略 |
 | `api-test-generator` | 3 类测试（单端点/调用链/数据一致性）+ L1/L2/L3 三层 Mock；Schema 优先级检测 |
+| `perf-test-generator` | 为 AI 应用生成 k6 性能测试脚本；支持 REST/SSE/WebSocket/混合 4 种模板；AI Streaming 专属指标（TTFT P95<2s、Stream Throughput）；baseline.json PR 级退化检测（>10% 告警） |
 
 ## 命名规范
 
