@@ -1,0 +1,30 @@
+{
+  "name": "my-qa-agent",
+  "version": "0.1.0",
+  "description": "Claude Code QA 自动化测试平台",
+  "private": true,
+  "scripts": {
+    "generate-excel": "node skills/excel-case-export/scripts/generate-excel.js",
+    "test:e2e": "playwright test",
+    "test:e2e:smoke": "playwright test --grep @smoke",
+    "test:e2e:regression": "playwright test --grep \"@smoke|@regression\"",
+    "test:e2e:report": "playwright show-report",
+    "test:unit": "vitest run",
+    "test:unit:coverage": "vitest run --coverage",
+    "test:api": "vitest run tests/api/"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "exceljs": "^4.4.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^22.0.0",
+    "@types/supertest": "^6.0.0",
+    "@vitest/coverage-v8": "^1.6.0",
+    "msw": "^2.3.0",
+    "supertest": "^7.0.0",
+    "vitest": "^1.6.0",
+    "ws": "^8.21.0"
+  }
+}

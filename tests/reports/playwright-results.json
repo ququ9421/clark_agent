@@ -1,0 +1,382 @@
+{
+  "config": {
+    "configFile": "E:\\Clark_agent\\playwright.config.ts",
+    "rootDir": "E:/Clark_agent/tests/e2e/specs",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "E:/Clark_agent/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "setup",
+        "name": "setup",
+        "testDir": "E:/Clark_agent/tests/e2e/specs",
+        "testIgnore": [],
+        "testMatch": [
+          "/auth\\.setup\\.ts/"
+        ],
+        "timeout": 45000
+      },
+      {
+        "outputDir": "E:/Clark_agent/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "e2e",
+        "name": "e2e",
+        "testDir": "E:/Clark_agent/tests/e2e/specs",
+        "testIgnore": [
+          "/auth\\.setup\\.ts/"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 45000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json",
+        {
+          "outputFile": "tests/reports/playwright-results.json"
+        }
+      ],
+      [
+        "html",
+        {
+          "outputFolder": "playwright-report",
+          "open": "never"
+        }
+      ],
+      [
+        "list",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.60.0",
+    "workers": 6,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "auth.setup.ts",
+      "file": "auth.setup.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "登录 FIS 系统并缓存认证状态",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "setup",
+              "projectName": "setup",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 1,
+                  "error": {
+                    "message": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\ci24519\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1223\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝",
+                    "stack": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\ci24519\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1223\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+                  },
+                  "errors": [
+                    {
+                      "message": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\ci24519\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1223\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-06-12T10:24:44.320Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "E:\\Clark_agent\\test-results\\auth.setup.ts-登录-FIS-系统并缓存认证状态-setup\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "E:\\Clark_agent\\test-results\\auth.setup.ts-登录-FIS-系统并缓存认证状态-setup\\trace.zip"
+                    }
+                  ]
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "17e3fe6f4d9d8bd79c6b-7ae14894207f244f1579",
+          "file": "auth.setup.ts",
+          "line": 9,
+          "column": 6
+        }
+      ]
+    },
+    {
+      "title": "invoice-hewoa-prd.test.ts",
+      "file": "invoice-hewoa-prd.test.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "prd-invoice-apply-api",
+          "file": "invoice-hewoa-prd.test.ts",
+          "line": 11,
+          "column": 6,
+          "specs": [
+            {
+              "title": "[TC-PRD-HEWOA-001] 发票申请接口接收全量有效数据成功创建开票申请单",
+              "ok": true,
+              "tags": [
+                "P0",
+                "smoke"
+              ],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "5eb5073ee7f88009ab3d-7487795ee70368d2d127",
+              "file": "invoice-hewoa-prd.test.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "[TC-PRD-HEWOA-020] 退票标识=否且申请单不存在时接口创建蓝字开票申请单成功",
+              "ok": true,
+              "tags": [
+                "P0",
+                "smoke"
+              ],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "5eb5073ee7f88009ab3d-1924ea592b006d76b37a",
+              "file": "invoice-hewoa-prd.test.ts",
+              "line": 156,
+              "column": 7
+            },
+            {
+              "title": "[TC-PRD-HEWOA-021] 退票标识=退票且关联数据存在且金额合法时创建红字退票申请单成功",
+              "ok": true,
+              "tags": [
+                "P0",
+                "smoke"
+              ],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "5eb5073ee7f88009ab3d-40d49c7757a65dc5868e",
+              "file": "invoice-hewoa-prd.test.ts",
+              "line": 177,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "prd-hewa-billing-list",
+          "file": "invoice-hewoa-prd.test.ts",
+          "line": 364,
+          "column": 6,
+          "specs": [
+            {
+              "title": "[TC-PRD-HEWOA-028] 开票申请单完整状态流转：已确认待开票→开票中→开票成功",
+              "ok": true,
+              "tags": [
+                "P0",
+                "smoke"
+              ],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "5eb5073ee7f88009ab3d-d5a5e262ab5c2e4c52d9",
+              "file": "invoice-hewoa-prd.test.ts",
+              "line": 503,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "prd-hewa-refund-list",
+          "file": "invoice-hewoa-prd.test.ts",
+          "line": 611,
+          "column": 6,
+          "specs": [
+            {
+              "title": "[TC-PRD-HEWOA-015] 红冲退票金额含税等于蓝字发票金额时提交成功",
+              "ok": true,
+              "tags": [
+                "P0",
+                "smoke"
+              ],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "5eb5073ee7f88009ab3d-21d33e5380e9fe2cdb2d",
+              "file": "invoice-hewoa-prd.test.ts",
+              "line": 635,
+              "column": 7
+            },
+            {
+              "title": "[TC-PRD-HEWOA-030] 退票申请单完整状态流转：待退票→红冲操作→退票成功",
+              "ok": true,
+              "tags": [
+                "P0",
+                "smoke"
+              ],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "5eb5073ee7f88009ab3d-7324f6699529fa8d80a3",
+              "file": "invoice-hewoa-prd.test.ts",
+              "line": 724,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "prd-hewa-billing-e2e",
+          "file": "invoice-hewoa-prd.test.ts",
+          "line": 810,
+          "column": 6,
+          "specs": [
+            {
+              "title": "[TC-PRD-HEWOA-033] Hewa开票完整正向流程：从接口提交到结果回传",
+              "ok": true,
+              "tags": [
+                "P0",
+                "smoke"
+              ],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "5eb5073ee7f88009ab3d-6b26abeabf06fd7761c8",
+              "file": "invoice-hewoa-prd.test.ts",
+              "line": 811,
+              "column": 7
+            },
+            {
+              "title": "[TC-PRD-HEWOA-034] Hewa退票完整正向流程：拆分开票后对单张发票发起退票到结果回传",
+              "ok": true,
+              "tags": [
+                "P0",
+                "smoke"
+              ],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "e2e",
+                  "projectName": "e2e",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "5eb5073ee7f88009ab3d-85dd0162248dace7dff0",
+              "file": "invoice-hewoa-prd.test.ts",
+              "line": 849,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-06-12T10:24:43.717Z",
+    "duration": 669.4390000000001,
+    "expected": 0,
+    "skipped": 8,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

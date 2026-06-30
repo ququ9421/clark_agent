@@ -1,0 +1,1279 @@
+[
+  {
+    "id": "TC-PRD-HEWOA-001",
+    "storyId": "prd-invoice-apply-api",
+    "title": "发票申请接口接收全量有效数据成功创建开票申请单",
+    "source": "prd",
+    "priority": "P0",
+    "preconditions": ["FIS系统可访问", "FIS中不存在申请单id=APPLY-VALID-{timestamp}"],
+    "setup": [
+      { "type": "api", "action": "post", "pomMethod": "apiPost", "data": { "endpoint": "/api/invoice/apply", "body": { "source": "Hewa", "applyId": "APPLY-VALID-{timestamp}", "returnFlag": false, "totalAmount": 10000.00 } } }
+    ],
+    "uiElements": [],
+    "assertions": [
+      { "type": "apiResponse", "expected": "success" },
+      { "type": "apiField", "target": "documentStatus", "expected": "已确认待开票" },
+      { "type": "apiField", "target": "invoiceType", "expected": "蓝字" },
+      { "type": "apiField", "target": "allElectronicPaperFlag", "expected": "否" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-002",
+    "storyId": "prd-invoice-apply-api",
+    "title": "发票申请接口重复提交相同申请单id返回已同步错误",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["FIS系统中已存在数据来源=Hewa、申请单id=APPLY-EXIST-001的记录"],
+    "setup": [
+      { "type": "api", "action": "post", "pomMethod": "apiPost", "data": { "endpoint": "/api/invoice/apply", "body": { "source": "Hewa", "applyId": "APPLY-EXIST-001" } } }
+    ],
+    "uiElements": [],
+    "assertions": [
+      { "type": "apiResponse", "expected": "error" },
+      { "type": "apiField", "target": "message", "expected": "申请单id【APPLY-EXIST-001】已同步！" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-003",
+    "storyId": "prd-invoice-apply-api",
+    "title": "退票标识=退票时对应开票申请单id在FIS中不存在返回错误",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["FIS系统中不存在开票申请单id=ORIGIN-NOT-EXIST"],
+    "setup": [
+      { "type": "api", "action": "post", "pomMethod": "apiPost", "data": { "endpoint": "/api/invoice/apply", "body": { "source": "Hewa", "returnFlag": true, "originApplyId": "ORIGIN-NOT-EXIST" } } }
+    ],
+    "uiElements": [],
+    "assertions": [
+      { "type": "apiResponse", "expected": "error" },
+      { "type": "apiField", "target": "message", "expected": "退票对应的开票申请单id【ORIGIN-NOT-EXIST】不存在！" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-004",
+    "storyId": "prd-invoice-apply-api",
+    "title": "退票标识=退票时对应开票申请明细id在FIS中不存在返回错误",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["FIS中存在开票申请单id=ORIGIN-EXIST-001，但明细id=DETAIL-NOT-EXIST不存在"],
+    "setup": [
+      { "type": "api", "action": "post", "pomMethod": "apiPost", "data": { "endpoint": "/api/invoice/apply", "body": { "source": "Hewa", "returnFlag": true, "originApplyId": "ORIGIN-EXIST-001", "originDetailId": "DETAIL-NOT-EXIST" } } }
+    ],
+    "uiElements": [],
+    "assertions": [
+      { "type": "apiResponse", "expected": "error" },
+      { "type": "apiField", "target": "message", "expected": "退票对应的开票申请明细id【DETAIL-NOT-EXIST】不存在！" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-005",
+    "storyId": "prd-invoice-apply-api",
+    "title": "发票总金额不等于发票明细行含税金额合计时接口返回错误",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["FIS系统可访问", "申请单id在FIS中不存在"],
+    "setup": [
+      { "type": "api", "action": "post", "pomMethod": "apiPost", "data": { "endpoint": "/api/invoice/apply", "body": { "source": "Hewa", "totalAmount": 10000.00, "invoiceLineTotal": 9999.00 } } }
+    ],
+    "uiElements": [],
+    "assertions": [
+      { "type": "apiResponse", "expected": "error" },
+      { "type": "apiField", "target": "message", "expected": "发票总金额不等于发票明细行的含税金额合计！" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-006",
+    "storyId": "prd-invoice-apply-api",
+    "title": "发票明细行含税金额不等于税额加不含税金额时接口返回错误",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["FIS系统可访问", "申请单id在FIS中不存在"],
+    "setup": [
+      { "type": "api", "action": "post", "pomMethod": "apiPost", "data": { "endpoint": "/api/invoice/apply", "body": { "source": "Hewa", "lineId": "LINE-001", "lineAmountWithTax": 1000.00, "taxAmount": 100.00, "lineAmountExTax": 800.00 } } }
+    ],
+    "uiElements": [],
+    "assertions": [
+      { "type": "apiResponse", "expected": "error" },
+      { "type": "apiField", "target": "message", "expected": "发票明细行id【LINE-001】含税金额不等于不含税金额和税额的合计！" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-007",
+    "storyId": "prd-invoice-recall-api",
+    "title": "发票申请撤回接口申请单不存在时返回错误",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["FIS系统中不存在申请单id=RECALL-NOT-EXIST"],
+    "setup": [
+      { "type": "api", "action": "post", "pomMethod": "apiPost", "data": { "endpoint": "/api/invoice/recall", "body": { "source": "Hewa", "applyId": "RECALL-NOT-EXIST" } } }
+    ],
+    "uiElements": [],
+    "assertions": [
+      { "type": "apiResponse", "expected": "error" },
+      { "type": "apiField", "target": "message", "expected": "申请单id【RECALL-NOT-EXIST】不存在！" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-008",
+    "storyId": "prd-invoice-recall-api",
+    "title": "发票申请撤回接口申请单状态为开票中时不允许撤回",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["FIS中存在状态=开票中的Hewa开票申请单APPLY-BILLING-001"],
+    "setup": [
+      { "type": "api", "action": "post", "pomMethod": "apiPost", "data": { "endpoint": "/api/invoice/recall", "body": { "source": "Hewa", "applyId": "APPLY-BILLING-001" } } }
+    ],
+    "uiElements": [],
+    "assertions": [
+      { "type": "apiResponse", "expected": "error" },
+      { "type": "apiField", "target": "message", "expected": "发票申请已在开票中或已开票成功，不允许撤回！" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-009",
+    "storyId": "prd-hewa-billing-list",
+    "title": "Hewa开票列表页默认筛选条件只显示待确认和已确认待开票的数据",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["系统中存在各种状态的Hewa开票申请单"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/billing" } }
+    ],
+    "uiElements": [
+      {
+        "role": "tab",
+        "name": "Hewa开票",
+        "action": "click",
+        "locatorHint": "getByRole('tab', { name: /Hewa开票/i })"
+      }
+    ],
+    "assertions": [
+      { "type": "visible", "target": "Hewa开票 tab内容区" },
+      { "type": "listFilter", "target": "单据状态列", "expected": ["待确认", "已确认待开票"] },
+      { "type": "notContain", "target": "单据状态列", "expected": "开票中" },
+      { "type": "notContain", "target": "单据状态列", "expected": "开票成功" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-010",
+    "storyId": "prd-hewa-refund-list",
+    "title": "Hewa退票列表页默认筛选条件只显示待退票状态的数据",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["系统中存在待退票和退票成功状态的Hewa退票申请单"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/refund" } }
+    ],
+    "uiElements": [
+      {
+        "role": "tab",
+        "name": "Hewa退票",
+        "action": "click",
+        "locatorHint": "getByRole('tab', { name: /Hewa退票/i })"
+      }
+    ],
+    "assertions": [
+      { "type": "visible", "target": "Hewa退票 tab内容区" },
+      { "type": "listFilter", "target": "单据状态列", "expected": ["待退票"] },
+      { "type": "notContain", "target": "单据状态列", "expected": "退票成功" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-011",
+    "storyId": "prd-invoice-apply-api",
+    "title": "购买方税号含空格制表符换行符时系统自动去除后保存",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["FIS系统可访问", "申请单id在FIS中不存在"],
+    "setup": [
+      { "type": "api", "action": "post", "pomMethod": "apiPost", "data": { "endpoint": "/api/invoice/apply", "body": { "source": "Hewa", "buyerTaxNo": "  91310000MA1FL9YK0F\t\n" } } }
+    ],
+    "uiElements": [],
+    "assertions": [
+      { "type": "apiResponse", "expected": "success" },
+      { "type": "dbField", "target": "buyer_tax_no", "expected": "91310000MA1FL9YK0F" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-012",
+    "storyId": "prd-hewa-billing-list",
+    "title": "申请单号查询框输入恰好100个字符时可正常查询",
+    "source": "prd",
+    "priority": "P2",
+    "preconditions": ["已进入Hewa开票列表页"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/billing/hewa" } }
+    ],
+    "uiElements": [
+      {
+        "role": "textbox",
+        "name": "申请单号",
+        "action": "fill",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "locatorHint": "getByPlaceholder(/请输入申请单号/i)"
+      },
+      {
+        "role": "button",
+        "name": "查询",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /查询/i })"
+      }
+    ],
+    "assertions": [
+      { "type": "notVisible", "target": "错误提示" },
+      { "type": "inputValue", "target": "申请单号输入框", "expected": "100个字符" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-013",
+    "storyId": "prd-hewa-billing-list",
+    "title": "申请单号查询框粘贴101个字符时超出部分不可输入",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["已进入Hewa开票列表页"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/billing/hewa" } }
+    ],
+    "uiElements": [
+      {
+        "role": "textbox",
+        "name": "申请单号",
+        "action": "fill",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "locatorHint": "getByPlaceholder(/请输入申请单号/i)"
+      }
+    ],
+    "assertions": [
+      { "type": "inputMaxLength", "target": "申请单号输入框", "expected": 100 },
+      { "type": "inputLength", "target": "申请单号输入框", "expected": 100 }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-014",
+    "storyId": "prd-hewa-billing-list",
+    "title": "业务类型描述查询框输入恰好200个字符时可正常查询",
+    "source": "prd",
+    "priority": "P2",
+    "preconditions": ["已进入Hewa开票列表页"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/billing/hewa" } }
+    ],
+    "uiElements": [
+      {
+        "role": "textbox",
+        "name": "业务类型描述",
+        "action": "fill",
+        "value": "业务描述测试数据业务描述测试数据业务描述测试数据业务描述测试数据业务描述测试数据业务描述测试数据业务描述测试数据业务描述测试数据业务描述测试数据业务描述测试数据业务描述测试数据业务描述测试数据业务描述测试数据业务描述测试数据业务描述测试数据业务描述测试数据业务描述测试数据业务描述测试数据业务描述测试数据业务描述测试数据",
+        "locatorHint": "getByPlaceholder(/请输入业务类型描述/i)"
+      },
+      {
+        "role": "button",
+        "name": "查询",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /查询/i })"
+      }
+    ],
+    "assertions": [
+      { "type": "notVisible", "target": "系统错误提示" },
+      { "type": "visible", "target": "查询结果区域" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-015",
+    "storyId": "prd-hewa-refund-list",
+    "title": "红冲退票金额含税等于蓝字发票金额时提交成功",
+    "source": "prd",
+    "priority": "P0",
+    "preconditions": ["通过UI找到状态=待退票的Hewa退票申请单，对应蓝字发票金额=10000.00"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/refund/hewa" } }
+    ],
+    "uiElements": [
+      {
+        "role": "button",
+        "name": "红冲",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /红冲/i }).first()"
+      },
+      {
+        "role": "combobox",
+        "name": "蓝字发票号码",
+        "action": "selectOption",
+        "value": "全部",
+        "locatorHint": "getByLabel(/蓝字发票号码/i)"
+      },
+      {
+        "role": "textbox",
+        "name": "红字发票号码",
+        "action": "fill",
+        "value": "9999999999",
+        "locatorHint": "getByLabel(/红字发票号码/i)"
+      },
+      {
+        "role": "textbox",
+        "name": "退票金额",
+        "action": "fill",
+        "value": "10000.00",
+        "locatorHint": "getByLabel(/退票金额/i)"
+      },
+      {
+        "role": "button",
+        "name": "提交",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /提交/i })"
+      }
+    ],
+    "assertions": [
+      { "type": "notVisible", "target": "红冲弹窗" },
+      { "type": "text", "target": "单据状态", "expected": "退票成功" }
+    ],
+    "teardown": [],
+    "timeout": 30000
+  },
+  {
+    "id": "TC-PRD-HEWOA-016",
+    "storyId": "prd-hewa-refund-list",
+    "title": "红冲退票金额含税超过蓝字发票金额时提交失败并显示错误提示",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["找到状态=待退票的Hewa退票申请单，对应蓝字发票金额=10000.00"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/refund/hewa" } }
+    ],
+    "uiElements": [
+      {
+        "role": "button",
+        "name": "红冲",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /红冲/i }).first()"
+      },
+      {
+        "role": "textbox",
+        "name": "退票金额",
+        "action": "fill",
+        "value": "10000.01",
+        "locatorHint": "getByLabel(/退票金额/i)"
+      },
+      {
+        "role": "button",
+        "name": "提交",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /提交/i })"
+      }
+    ],
+    "assertions": [
+      { "type": "visible", "target": "红冲弹窗" },
+      { "type": "text", "target": "错误提示", "expected": "退票金额需大于0，小于等于蓝字发票金额" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-017",
+    "storyId": "prd-hewa-refund-list",
+    "title": "红冲操作日期选择上月1日时可正常选中",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["进入Hewa退票列表，红冲弹窗已打开"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/refund/hewa" } }
+    ],
+    "uiElements": [
+      {
+        "role": "button",
+        "name": "红冲",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /红冲/i }).first()"
+      },
+      {
+        "role": "textbox",
+        "name": "操作红冲日期",
+        "action": "fill",
+        "value": "2026-05-01",
+        "locatorHint": "getByLabel(/操作红冲日期/i)"
+      }
+    ],
+    "assertions": [
+      { "type": "inputValue", "target": "操作红冲日期", "expected": "2026-05-01" },
+      { "type": "notVisible", "target": "日期不可选错误提示" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-018",
+    "storyId": "prd-hewa-refund-list",
+    "title": "红冲操作日期选择上月1日的前一天时不可选",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["进入Hewa退票列表，红冲弹窗已打开"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/refund/hewa" } }
+    ],
+    "uiElements": [
+      {
+        "role": "button",
+        "name": "红冲",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /红冲/i }).first()"
+      },
+      {
+        "role": "button",
+        "name": "2026-04-30",
+        "action": "click",
+        "locatorHint": "getByText('30').filter({ hasText: '30' })"
+      }
+    ],
+    "assertions": [
+      { "type": "disabled", "target": "2026-04-30日期按钮" },
+      { "type": "notInputValue", "target": "操作红冲日期", "expected": "2026-04-30" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-019",
+    "storyId": "prd-invoice-autobill",
+    "title": "自动开票连续失败达到5次后不再自动重试",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["存在数据来源=Hewa的已确认待开票申请单，供应商接口被模拟为持续失败，已失败4次"],
+    "setup": [],
+    "uiElements": [],
+    "assertions": [
+      { "type": "dbField", "target": "auto_retry_count", "expected": 5 },
+      { "type": "dbField", "target": "auto_retry_stopped", "expected": true },
+      { "type": "taskNotExecuted", "target": "第6次自动开票请求" }
+    ],
+    "teardown": [],
+    "timeout": 60000
+  },
+  {
+    "id": "TC-PRD-HEWOA-020",
+    "storyId": "prd-invoice-apply-api",
+    "title": "退票标识=否且申请单不存在时接口创建蓝字开票申请单成功",
+    "source": "prd",
+    "priority": "P0",
+    "preconditions": ["FIS中不存在申请单id=APPLY-BLUE-{timestamp}", "金额字段均满足校验规则"],
+    "setup": [
+      { "type": "api", "action": "post", "pomMethod": "apiPost", "data": { "endpoint": "/api/invoice/apply", "body": { "source": "Hewa", "returnFlag": false, "applyId": "APPLY-BLUE-{timestamp}" } } }
+    ],
+    "uiElements": [],
+    "assertions": [
+      { "type": "apiResponse", "expected": "success" },
+      { "type": "apiField", "target": "documentStatus", "expected": "已确认待开票" },
+      { "type": "apiField", "target": "invoiceType", "expected": "蓝字" },
+      { "type": "apiField", "target": "allElectronicPaperFlag", "expected": "否" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-021",
+    "storyId": "prd-invoice-apply-api",
+    "title": "退票标识=退票且关联数据存在且金额合法时创建红字退票申请单成功",
+    "source": "prd",
+    "priority": "P0",
+    "preconditions": ["FIS中存在开票申请单id=ORIGIN-001且对应明细id=DETAIL-ORIGIN-001"],
+    "setup": [
+      { "type": "api", "action": "post", "pomMethod": "apiPost", "data": { "endpoint": "/api/invoice/apply", "body": { "source": "Hewa", "returnFlag": true, "originApplyId": "ORIGIN-001", "originDetailId": "DETAIL-ORIGIN-001" } } }
+    ],
+    "uiElements": [],
+    "assertions": [
+      { "type": "apiResponse", "expected": "success" },
+      { "type": "apiField", "target": "documentStatus", "expected": "待退票" },
+      { "type": "apiField", "target": "invoiceType", "expected": "红字" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-022",
+    "storyId": "prd-invoice-recall-api",
+    "title": "开票申请单状态为开票成功时撤回接口拒绝操作",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["FIS中存在状态=开票成功的Hewa开票申请单APPLY-SUCCESS-001"],
+    "setup": [
+      { "type": "api", "action": "post", "pomMethod": "apiPost", "data": { "endpoint": "/api/invoice/recall", "body": { "source": "Hewa", "applyId": "APPLY-SUCCESS-001" } } }
+    ],
+    "uiElements": [],
+    "assertions": [
+      { "type": "apiResponse", "expected": "error" },
+      { "type": "apiField", "target": "message", "expected": "发票申请已在开票中或已开票成功，不允许撤回！" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-023",
+    "storyId": "prd-invoice-recall-api",
+    "title": "开票申请单状态为已确认待开票时撤回接口逻辑删除成功",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["通过UI创建状态=已确认待开票的Hewa开票申请单APPLY-CONFIRMED-{timestamp}"],
+    "setup": [
+      { "type": "api", "action": "post", "pomMethod": "apiPost", "data": { "endpoint": "/api/invoice/recall", "body": { "source": "Hewa", "applyId": "APPLY-CONFIRMED-{timestamp}" } } }
+    ],
+    "uiElements": [],
+    "assertions": [
+      { "type": "apiResponse", "expected": "success" },
+      { "type": "apiQueryEmpty", "target": "申请单查询", "expected": "该申请单不可见（逻辑删除）" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-024",
+    "storyId": "prd-hewa-billing-list",
+    "title": "勾选申请单后批量下载时只下载所选申请单的影像文件",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["Hewa开票列表中至少存在3条已有PDF的开票成功申请单（A、B、C）"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/billing/hewa" } }
+    ],
+    "uiElements": [
+      {
+        "role": "checkbox",
+        "name": "申请单A复选框",
+        "action": "check",
+        "locatorHint": "getByRole('row').filter({ hasText: '申请单A' }).getByRole('checkbox')"
+      },
+      {
+        "role": "checkbox",
+        "name": "申请单B复选框",
+        "action": "check",
+        "locatorHint": "getByRole('row').filter({ hasText: '申请单B' }).getByRole('checkbox')"
+      },
+      {
+        "role": "button",
+        "name": "批量生成影像文件",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /批量生成影像文件/i })"
+      },
+      {
+        "role": "checkbox",
+        "name": "影像文件",
+        "action": "check",
+        "locatorHint": "getByLabel(/影像文件/i)"
+      },
+      {
+        "role": "checkbox",
+        "name": "PDF",
+        "action": "check",
+        "locatorHint": "getByLabel('PDF')"
+      },
+      {
+        "role": "button",
+        "name": "下载",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /下载/i })"
+      }
+    ],
+    "assertions": [
+      { "type": "downloadCount", "target": "下载文件数量", "expected": 2 },
+      { "type": "downloadNotContain", "target": "下载文件", "expected": "申请单C" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-025",
+    "storyId": "prd-hewa-billing-list",
+    "title": "未勾选申请单时批量下载影像文件下载当前筛选条件下所有申请单文件",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["当前Hewa开票列表（特定筛选条件下）有5条已有PDF的申请单，未勾选任何申请单"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/billing/hewa" } }
+    ],
+    "uiElements": [
+      {
+        "role": "button",
+        "name": "批量生成影像文件",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /批量生成影像文件/i })"
+      },
+      {
+        "role": "checkbox",
+        "name": "影像文件",
+        "action": "check",
+        "locatorHint": "getByLabel(/影像文件/i)"
+      },
+      {
+        "role": "checkbox",
+        "name": "PDF",
+        "action": "check",
+        "locatorHint": "getByLabel('PDF')"
+      },
+      {
+        "role": "button",
+        "name": "下载",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /下载/i })"
+      }
+    ],
+    "assertions": [
+      { "type": "downloadCount", "target": "下载文件数量", "expected": 5 }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-026",
+    "storyId": "prd-hewa-billing-list",
+    "title": "批量开票选中申请单包含非待开票或开票失败状态时按钮置灰不可点",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["Hewa开票列表中存在申请单A（已确认待开票）和申请单B（开票中）"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/billing/hewa" } }
+    ],
+    "uiElements": [
+      {
+        "role": "checkbox",
+        "name": "申请单A复选框",
+        "action": "check",
+        "locatorHint": "getByRole('row').filter({ hasText: '已确认待开票' }).first().getByRole('checkbox')"
+      },
+      {
+        "role": "checkbox",
+        "name": "申请单B复选框",
+        "action": "check",
+        "locatorHint": "getByRole('row').filter({ hasText: '开票中' }).first().getByRole('checkbox')"
+      }
+    ],
+    "assertions": [
+      { "type": "disabled", "target": "批量开票按钮" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-027",
+    "storyId": "prd-hewa-refund-list",
+    "title": "退票成功在关账日前可修改而过了关账日不可修改",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["存在未超关账日的退票成功申请单A和已超关账日的退票成功申请单B"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/refund/hewa" } }
+    ],
+    "uiElements": [
+      {
+        "role": "combobox",
+        "name": "单据状态",
+        "action": "selectOption",
+        "value": "退票成功",
+        "locatorHint": "getByLabel(/单据状态/i)"
+      }
+    ],
+    "assertions": [
+      { "type": "visible", "target": "申请单A的修改按钮" },
+      { "type": "notVisible", "target": "申请单B的修改按钮" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-028",
+    "storyId": "prd-hewa-billing-list",
+    "title": "开票申请单完整状态流转：已确认待开票→开票中→开票成功",
+    "source": "prd",
+    "priority": "P0",
+    "preconditions": ["通过接口创建状态=已确认待开票的Hewa开票申请单APPLY-FLOW-{timestamp}", "供应商开票接口正常"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/billing/hewa" } }
+    ],
+    "uiElements": [
+      {
+        "role": "checkbox",
+        "name": "申请单APPLY-FLOW复选框",
+        "action": "check",
+        "locatorHint": "getByRole('row').filter({ hasText: 'APPLY-FLOW' }).getByRole('checkbox')"
+      },
+      {
+        "role": "button",
+        "name": "批量开票",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /批量开票/i })"
+      },
+      {
+        "role": "button",
+        "name": "确认批量开票",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /确认批量开票/i })"
+      }
+    ],
+    "assertions": [
+      { "type": "text", "target": "申请单APPLY-FLOW的状态", "expected": "开票中" },
+      { "type": "eventually", "target": "申请单APPLY-FLOW的状态", "expected": "开票成功" },
+      { "type": "visible", "target": "申请单APPLY-FLOW的发票号码" }
+    ],
+    "teardown": [],
+    "timeout": 120000
+  },
+  {
+    "id": "TC-PRD-HEWOA-029",
+    "storyId": "prd-hewa-billing-list",
+    "title": "开票申请单开票失败后可重新批量开票再次发起",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["FIS中存在状态=开票失败的Hewa开票申请单APPLY-FAIL-{timestamp}"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/billing/hewa" } }
+    ],
+    "uiElements": [
+      {
+        "role": "combobox",
+        "name": "单据状态",
+        "action": "selectOption",
+        "value": "开票失败",
+        "locatorHint": "getByLabel(/单据状态/i)"
+      },
+      {
+        "role": "checkbox",
+        "name": "开票失败申请单复选框",
+        "action": "check",
+        "locatorHint": "getByRole('row').filter({ hasText: '开票失败' }).first().getByRole('checkbox')"
+      }
+    ],
+    "assertions": [
+      { "type": "enabled", "target": "批量开票按钮" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-030",
+    "storyId": "prd-hewa-refund-list",
+    "title": "退票申请单完整状态流转：待退票→红冲操作→退票成功",
+    "source": "prd",
+    "priority": "P0",
+    "preconditions": ["通过接口创建状态=待退票的Hewa退票申请单REFUND-FLOW-{timestamp}", "对应蓝字发票已存在"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/refund/hewa" } }
+    ],
+    "uiElements": [
+      {
+        "role": "button",
+        "name": "红冲",
+        "action": "click",
+        "locatorHint": "getByRole('row').filter({ hasText: 'REFUND-FLOW' }).getByRole('button', { name: /红冲/i })"
+      },
+      {
+        "role": "combobox",
+        "name": "蓝字发票号码",
+        "action": "selectOption",
+        "value": "全部",
+        "locatorHint": "getByLabel(/蓝字发票号码/i)"
+      },
+      {
+        "role": "textbox",
+        "name": "操作红冲日期",
+        "action": "fill",
+        "value": "2026-06-12",
+        "locatorHint": "getByLabel(/操作红冲日期/i)"
+      },
+      {
+        "role": "textbox",
+        "name": "红字发票号码",
+        "action": "fill",
+        "value": "8888888888",
+        "locatorHint": "getByLabel(/红字发票号码/i)"
+      },
+      {
+        "role": "button",
+        "name": "提交",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /提交/i })"
+      }
+    ],
+    "assertions": [
+      { "type": "text", "target": "REFUND-FLOW申请单状态", "expected": "退票成功" },
+      { "type": "text", "target": "退票日期", "expected": "2026-06-12" }
+    ],
+    "teardown": [],
+    "timeout": 30000
+  },
+  {
+    "id": "TC-PRD-HEWOA-031",
+    "storyId": "prd-invoice-recall-api",
+    "title": "开票申请单开票成功状态不允许通过撤回接口逆转",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["FIS中存在状态=开票成功的申请单APPLY-BILLED-001"],
+    "setup": [
+      { "type": "api", "action": "post", "pomMethod": "apiPost", "data": { "endpoint": "/api/invoice/recall", "body": { "source": "Hewa", "applyId": "APPLY-BILLED-001" } } }
+    ],
+    "uiElements": [],
+    "assertions": [
+      { "type": "apiResponse", "expected": "error" },
+      { "type": "apiField", "target": "message", "expected": "发票申请已在开票中或已开票成功，不允许撤回！" },
+      { "type": "apiQuery", "target": "申请单状态", "expected": "开票成功" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-032",
+    "storyId": "prd-hewa-refund-list",
+    "title": "退票申请单退票成功状态不允许再次红冲",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["Hewa退票列表中存在状态=退票成功的申请单"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/refund/hewa" } }
+    ],
+    "uiElements": [
+      {
+        "role": "combobox",
+        "name": "单据状态",
+        "action": "selectOption",
+        "value": "退票成功",
+        "locatorHint": "getByLabel(/单据状态/i)"
+      }
+    ],
+    "assertions": [
+      { "type": "notVisible", "target": "退票成功申请单行的红冲按钮" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-033",
+    "storyId": "prd-hewa-billing-e2e",
+    "title": "Hewa开票完整正向流程：从接口提交到结果回传",
+    "source": "prd",
+    "priority": "P0",
+    "preconditions": ["FIS与Hewa接口联通", "供应商开票接口正常", "工作日9:00-18:00期间"],
+    "setup": [
+      { "type": "api", "action": "post", "pomMethod": "apiPost", "data": { "endpoint": "/api/invoice/apply", "body": { "source": "Hewa", "returnFlag": false, "totalAmount": 8000.00 } } },
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/billing/hewa" } }
+    ],
+    "uiElements": [
+      {
+        "role": "tab",
+        "name": "Hewa开票",
+        "action": "click",
+        "locatorHint": "getByRole('tab', { name: /Hewa开票/i })"
+      }
+    ],
+    "assertions": [
+      { "type": "visible", "target": "新申请单行，状态=已确认待开票" },
+      { "type": "eventually", "target": "申请单状态", "expected": "开票成功" },
+      { "type": "visible", "target": "发票号码列（非空）" },
+      { "type": "hewaCallback", "target": "处理结果", "expected": "成功" },
+      { "type": "hewaCallback", "target": "蓝字发票号", "expected": "非空" },
+      { "type": "hewaCallback", "target": "红字发票号", "expected": "空" }
+    ],
+    "teardown": [],
+    "timeout": 120000
+  },
+  {
+    "id": "TC-PRD-HEWOA-034",
+    "storyId": "prd-hewa-billing-e2e",
+    "title": "Hewa退票完整正向流程：拆分开票后对单张发票发起退票到结果回传",
+    "source": "prd",
+    "priority": "P0",
+    "preconditions": ["系统中存在已拆分开票的申请单APPLY-SPLIT-{timestamp}，含两张发票FP-A和FP-B", "对应退票申请单已同步至FIS，状态=待退票"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/refund/hewa" } }
+    ],
+    "uiElements": [
+      {
+        "role": "button",
+        "name": "红冲",
+        "action": "click",
+        "locatorHint": "getByRole('row').filter({ hasText: 'APPLY-SPLIT' }).getByRole('button', { name: /红冲/i })"
+      },
+      {
+        "role": "combobox",
+        "name": "蓝字发票号码",
+        "action": "selectOption",
+        "value": "FP-A",
+        "locatorHint": "getByLabel(/蓝字发票号码/i)"
+      },
+      {
+        "role": "textbox",
+        "name": "操作红冲日期",
+        "action": "fill",
+        "value": "2026-06-12",
+        "locatorHint": "getByLabel(/操作红冲日期/i)"
+      },
+      {
+        "role": "textbox",
+        "name": "红字发票号码",
+        "action": "fill",
+        "value": "7777777777",
+        "locatorHint": "getByLabel(/红字发票号码/i)"
+      },
+      {
+        "role": "button",
+        "name": "提交",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /提交/i })"
+      }
+    ],
+    "assertions": [
+      { "type": "text", "target": "申请单状态", "expected": "退票成功" },
+      { "type": "hewaCallback", "target": "处理结果", "expected": "成功" },
+      { "type": "hewaCallback", "target": "红字发票号", "expected": "7777777777" }
+    ],
+    "teardown": [],
+    "timeout": 120000
+  },
+  {
+    "id": "TC-PRD-HEWOA-035",
+    "storyId": "prd-hewa-billing-e2e",
+    "title": "开票失败场景：供应商返回错误后Hewa收到失败通知",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["供应商接口被配置为返回错误（非'发票信息不存在'的错误）", "存在已确认待开票的Hewa申请单"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/billing/hewa" } }
+    ],
+    "uiElements": [
+      {
+        "role": "checkbox",
+        "name": "已确认待开票申请单",
+        "action": "check",
+        "locatorHint": "getByRole('row').filter({ hasText: '已确认待开票' }).first().getByRole('checkbox')"
+      },
+      {
+        "role": "button",
+        "name": "批量开票",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /批量开票/i })"
+      },
+      {
+        "role": "button",
+        "name": "确认批量开票",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /确认批量开票/i })"
+      }
+    ],
+    "assertions": [
+      { "type": "eventually", "target": "申请单状态", "expected": "开票失败" },
+      { "type": "hewaCallback", "target": "处理结果", "expected": "失败" },
+      { "type": "hewaCallback", "target": "失败原因", "expected": "非空" }
+    ],
+    "teardown": [],
+    "timeout": 60000
+  },
+  {
+    "id": "TC-PRD-HEWOA-036",
+    "storyId": "prd-hewa-billing-detail",
+    "title": "在Hewa开票详情页查看申请单完整信息",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["通过接口创建包含完整信息的Hewa开票申请单"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/billing/hewa" } }
+    ],
+    "uiElements": [
+      {
+        "role": "link",
+        "name": "申请单号链接",
+        "action": "click",
+        "locatorHint": "getByRole('link').filter({ hasText: /^APPLY/ }).first()"
+      }
+    ],
+    "assertions": [
+      { "type": "url", "expected": "/invoice/billing/detail/" },
+      { "type": "visible", "target": "申请单号" },
+      { "type": "visible", "target": "单据状态" },
+      { "type": "format", "target": "发票总金额", "expected": "千分位符+小数点后两位" },
+      { "type": "visible", "target": "账项明细表格" },
+      { "type": "visible", "target": "分成明细表格" },
+      { "type": "format", "target": "分成比例", "expected": "百分比格式（如20%）" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-037",
+    "storyId": "prd-invoice-apply-api",
+    "title": "项目编码匹配税收分类失败时系统钉钉告警且不阻断申请单创建",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["FIS数据字典中不包含项目编码=PROJECT-UNKNOWN的税收分类"],
+    "setup": [
+      { "type": "api", "action": "post", "pomMethod": "apiPost", "data": { "endpoint": "/api/invoice/apply", "body": { "source": "Hewa", "projectCode": "PROJECT-UNKNOWN" } } }
+    ],
+    "uiElements": [],
+    "assertions": [
+      { "type": "apiResponse", "expected": "success" },
+      { "type": "dingdingAlert", "target": "告警内容", "expected": "匹配税收分类、商品失败" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-038",
+    "storyId": "prd-invoice-apply-api",
+    "title": "并发提交相同申请单id时只有一次创建成功防止重复",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["FIS系统中不存在申请单id=APPLY-CONCURRENT-{timestamp}"],
+    "setup": [
+      { "type": "api", "action": "concurrentPost", "pomMethod": "concurrentApiPost", "data": { "endpoint": "/api/invoice/apply", "body": { "source": "Hewa", "applyId": "APPLY-CONCURRENT-{timestamp}" }, "concurrency": 2 } }
+    ],
+    "uiElements": [],
+    "assertions": [
+      { "type": "exactCount", "target": "成功响应数", "expected": 1 },
+      { "type": "exactCount", "target": "已同步错误响应数", "expected": 1 },
+      { "type": "dbCount", "target": "申请单记录数", "expected": 1 }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-039",
+    "storyId": "prd-invoice-apply-api",
+    "title": "金额字段含浮点精度问题时系统能正确校验不误判通过",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["FIS系统可访问"],
+    "setup": [
+      { "type": "api", "action": "post", "pomMethod": "apiPost", "data": { "endpoint": "/api/invoice/apply", "body": { "source": "Hewa", "lineAmountWithTax": 1000.00, "taxAmount": 942.44, "lineAmountExTax": 56.89 } } }
+    ],
+    "uiElements": [],
+    "assertions": [
+      { "type": "apiResponse", "expected": "error" },
+      { "type": "apiField", "target": "message", "expected": "含税金额不等于不含税金额和税额的合计！" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-040",
+    "storyId": "prd-hewa-billing-list",
+    "title": "发票号码查询框输入特殊字符时系统不报错且无安全漏洞",
+    "source": "prd",
+    "priority": "P2",
+    "preconditions": ["已进入Hewa开票列表页"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/billing/hewa" } }
+    ],
+    "uiElements": [
+      {
+        "role": "textbox",
+        "name": "发票号码",
+        "action": "fill",
+        "value": "<script>alert(1)</script>",
+        "locatorHint": "getByPlaceholder(/请输入发票号码/i)"
+      },
+      {
+        "role": "button",
+        "name": "查询",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /查询/i })"
+      }
+    ],
+    "assertions": [
+      { "type": "notVisible", "target": "JS alert弹窗" },
+      { "type": "notVisible", "target": "SQL错误提示" },
+      { "type": "notVisible", "target": "500服务器错误" },
+      { "type": "visible", "target": "查询结果区域（空列表或正常数据）" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-041",
+    "storyId": "prd-hewa-billing-list",
+    "title": "批量开票确认后立即刷新页面申请单状态正确不回退",
+    "source": "prd",
+    "priority": "P2",
+    "preconditions": ["Hewa开票列表中存在状态=已确认待开票的申请单"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/billing/hewa" } }
+    ],
+    "uiElements": [
+      {
+        "role": "checkbox",
+        "name": "已确认待开票申请单",
+        "action": "check",
+        "locatorHint": "getByRole('row').filter({ hasText: '已确认待开票' }).first().getByRole('checkbox')"
+      },
+      {
+        "role": "button",
+        "name": "批量开票",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /批量开票/i })"
+      },
+      {
+        "role": "button",
+        "name": "确认批量开票",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /确认批量开票/i })"
+      },
+      {
+        "role": "reload",
+        "name": "立即刷新页面",
+        "action": "reload",
+        "locatorHint": "page.reload()"
+      }
+    ],
+    "assertions": [
+      { "type": "text", "target": "申请单状态", "expected": "开票中" },
+      { "type": "notText", "target": "申请单状态", "expected": "已确认待开票" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-042",
+    "storyId": "prd-hewa-billing-list",
+    "title": "列表无数据时点击批量生成影像文件弹出提示而非弹窗",
+    "source": "prd",
+    "priority": "P2",
+    "preconditions": ["使用特定筛选条件使Hewa开票列表当前无结果"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/billing/hewa" } }
+    ],
+    "uiElements": [
+      {
+        "role": "textbox",
+        "name": "申请单号",
+        "action": "fill",
+        "value": "ZZZNONEEXIST999",
+        "locatorHint": "getByPlaceholder(/请输入申请单号/i)"
+      },
+      {
+        "role": "button",
+        "name": "查询",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /查询/i })"
+      },
+      {
+        "role": "button",
+        "name": "批量生成影像文件",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /批量生成影像文件/i })"
+      }
+    ],
+    "assertions": [
+      { "type": "visible", "target": "提示文字", "expected": "当前列表无数据，请查询后下载文件" },
+      { "type": "notVisible", "target": "下载弹窗" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-043",
+    "storyId": "prd-hewa-refund-list",
+    "title": "红冲弹窗退票金额输入0时提交失败并显示范围错误",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["进入Hewa退票列表，找到状态=待退票的申请单，打开红冲弹窗"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/invoice/refund/hewa" } }
+    ],
+    "uiElements": [
+      {
+        "role": "button",
+        "name": "红冲",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /红冲/i }).first()"
+      },
+      {
+        "role": "textbox",
+        "name": "退票金额",
+        "action": "fill",
+        "value": "0",
+        "locatorHint": "getByLabel(/退票金额/i)"
+      },
+      {
+        "role": "button",
+        "name": "提交",
+        "action": "click",
+        "locatorHint": "getByRole('button', { name: /提交/i })"
+      }
+    ],
+    "assertions": [
+      { "type": "visible", "target": "红冲弹窗" },
+      { "type": "text", "target": "错误提示", "expected": "退票金额需大于0，小于等于蓝字发票金额" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-044",
+    "storyId": "prd-accounting",
+    "title": "会计资料Hewa税务发票开票三类文件齐全时状态为资料齐全",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["存在Hewa税务发票开票申请单，关联发票已有PDF、OFD、XML三种文件，有客户确认函和发票申请单"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/accounting/voucher" } }
+    ],
+    "uiElements": [
+      {
+        "role": "link",
+        "name": "目标凭证/发票",
+        "action": "click",
+        "locatorHint": "getByRole('link').filter({ hasText: /目标Hewa发票/ }).first()"
+      }
+    ],
+    "assertions": [
+      { "type": "text", "target": "会计资料状态", "expected": "资料齐全" }
+    ],
+    "teardown": [],
+    "timeout": null
+  },
+  {
+    "id": "TC-PRD-HEWOA-045",
+    "storyId": "prd-accounting",
+    "title": "会计资料Hewa税务发票开票任一文件缺失时状态为资料缺失",
+    "source": "prd",
+    "priority": "P1",
+    "preconditions": ["存在Hewa税务发票开票申请单，关联发票只有PDF（无OFD和XML），有客户确认函和发票申请单"],
+    "setup": [
+      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/accounting/voucher" } }
+    ],
+    "uiElements": [
+      {
+        "role": "link",
+        "name": "目标凭证/发票（缺OFD/XML）",
+        "action": "click",
+        "locatorHint": "getByRole('link').filter({ hasText: /目标缺文件Hewa发票/ }).first()"
+      }
+    ],
+    "assertions": [
+      { "type": "text", "target": "会计资料状态", "expected": "资料缺失" }
+    ],
+    "teardown": [],
+    "timeout": null
+  }
+]
