@@ -1,19 +1,103 @@
 ---
 name: cdp-explorer
 description: 通过 Chrome DevTools Protocol 探查真实浏览器页面，发现所有交互元素和状态，输出 cdp-baseline-{slug}.json。输出的 locatorHint 供 test-case-generator 和 playwright-script-generator 使用。
-version: 1.0.0
-allowed_tools: [mcp__chrome-devtools__list_pages, mcp__chrome-devtools__select_page, mcp__chrome-devtools__take_snapshot, mcp__chrome-devtools__take_screenshot, mcp__chrome-devtools__evaluate_script, mcp__chrome-devtools__click, mcp__chrome-devtools__fill, mcp__chrome-devtools__hover, mcp__chrome-devtools__navigate_page, mcp__chrome-devtools__wait_for, mcp__chrome-devtools__press_key, Read, Write]
+version: 1.1.0
+allowed_tools: [mcp__chrome-devtools__list_pages, mcp__chrome-devtools__select_page, mcp__chrome-devtools__take_snapshot, mcp__chrome-devtools__take_screenshot, mcp__chrome-devtools__evaluate_script, mcp__chrome-devtools__click, mcp__chrome-devtools__fill, mcp__chrome-devtools__hover, mcp__chrome-devtools__navigate_page, mcp__chrome-devtools__wait_for, mcp__chrome-devtools__press_key, Read, Write, Grep, Glob]
 ---
 
 # CDP Explorer Skill
 
 > **核心思想**：Web 页面是有限状态机。探查 = 建立状态流转图（State-Flow Graph）。
-> CDP 发现的是**页面实际存在的内容**，而非需求文档描述的内容，输出的 locatorHint 是真实可用的。
+> CDP 发现的是**页面实际存在的内容**；源码揭示的是**应该存在什么、以及为什么**。
+> 两者结合，才能避免脆弱的 CSS locator、误判的条件渲染，以及遗漏的隐藏状态。
 
 ## 前置要求
 
 - Chrome DevTools MCP 服务器已在 `.claude/settings.json` 中配置
 - Chrome 浏览器已打开（可以是任意标签页，探查时会导航到目标 URL）
+
+---
+
+## Phase 0：源码前置阅读（有 sourceProjectDir 时必须执行）
+
+> **跳过规则**：调用方未传入 `sourceProjectDir`（或 `.env` 中未配置 `SOURCE_PROJECT_DIR`）时，
+> 记录 `WARNING: sourceProjectDir 未提供 — 降级为纯 CDP 模式`，直接跳到 Phase 1。
+> **有源码路径却跳过本阶段，视为规则违反。**
+
+### Step 0.1 — 定位目标组件
+
+根据调用方传入的 `pageUrl` 或 `targetArea`，在源码中找到对应组件文件：
+
+```
+1. 用 Grep 在 sourceProjectDir 中搜索与 pageUrl 路径段匹配的路由定义：
+   Grep("{pageUrl-path-segment}", sourceProjectDir, glob: "*.tsx,*.jsx,*.vue,*.ts")
+2. 若有 targetArea，同时搜索与区域名匹配的组件名
+3. 读取匹配到的组件文件（最多 3 个：页面组件 + 最多 2 个子组件）
+```
+
+### Step 0.2 — 提取稳定标识符
+
+从每个组件文件中提取以下信息：
+
+| 类别 | 查找内容 | 在 CDP 中的用途 |
+|------|---------|---------------|
+| Test ID | `data-testid="..."` | **最高优先级 locator** — 使用 getByTestId |
+| ARIA 属性 | `aria-label`、`role`、`title` | **次优先级** — 使用 getByRole/getByLabel |
+| 条件渲染 | `{condition && <El>}`、三元渲染 | 了解哪些元素需要触发特定状态才会出现 |
+| i18n Key | `t("key")`、`useTranslations` | 将显示文本映射到 i18n key，生成稳定 locator |
+| 语义 CSS 类 | CSS Module 名、BEM 类名 | 可用作 locator（跨构建稳定） |
+| Tailwind 工具类 | `rounded-xl`、`p-3`、`flex`、`bg-*` | **绝对禁止用作 locator** — 不语义化，随版本变化 |
+
+### Step 0.3 — 构建 sourceContext
+
+将提取结果整理为结构化摘要，供 Phase 1-4 使用：
+
+```json
+{
+  "components": [{ "name": "InvoicePage", "filePath": "src/pages/invoice.tsx", "role": "page" }],
+  "testIds": ["download-btn", "file-card", "batch-upload-btn"],
+  "ariaAttributes": [{ "element": "搜索框", "label": "搜索申请单号", "role": "searchbox" }],
+  "conditionalElements": [
+    { "element": "提交按钮", "condition": "form.isValid && !isSubmitting", "description": "表单验证通过后启用" }
+  ],
+  "i18nKeys": [{ "element": "上传按钮", "key": "invoice.upload", "namespace": "common" }],
+  "utilityClasses": ["rounded-xl", "p-3"]
+}
+```
+
+### Phase 0 与后续阶段的集成
+
+| 阶段 | sourceContext 的使用方式 |
+|------|------------------------|
+| Phase 2（初始扫描） | 将 CDP 发现的元素与源码对照；标记出以工具类为 locator 的元素 |
+| Phase 3（交互探查） | 利用 `conditionalElements` 提前预判隐藏状态；触发条件后再判断"元素是否存在" |
+| Phase 4（输出） | 交叉验证：CDP locator 使用了 Tailwind 类 → 替换为源码中的 testId/aria |
+
+### CDP 探查结束后的交叉验证
+
+| 情况 | 处理方式 |
+|------|---------|
+| CDP 发现了元素，但源码未渲染 | 可能来自共享 layout — 检查父组件 |
+| 源码有 data-testid，但 CDP 未找到该元素 | 条件渲染隐藏 — 记录触发条件，**不判定为缺失** |
+| CDP locator 使用了 Tailwind 工具类 | 替换为源码中的 data-testid 或 aria-* |
+| CDP 与源码的 data-testid 一致 | 最高置信度 — 直接使用 |
+| 源码显示按钮文本为 `t("key")` | POM 中使用 i18n key 而非硬编码文本 |
+
+### 输出质量检查（Phase 4 生成 POM 后执行）
+
+若 Phase 0 构建了 sourceContext，在 POM/spec 生成完成后执行以下校验：
+
+```
+若 sourceContext.testIds 非空：
+  Grep 生成的 POM 中 "getByTestId" 的使用
+  若 0 处命中 → WARNING: "源码含 data-testid 但 POM 未使用 getByTestId — Phase 0 可能未被应用"
+
+Grep 生成的 POM 中以 Tailwind 工具类作为 locator 的情况：
+  Pattern: locator('.*(?:rounded|flex|p-|m-|gap-|border|bg-|text-|w-|h-)
+  若有命中 → WARNING: "POM 使用了 Tailwind 工具类作为 locator — 不稳定，建议改用 data-testid/aria"
+```
+
+> 此校验为事后提示，不阻断流程，仅标记质量风险。
 
 ---
 
