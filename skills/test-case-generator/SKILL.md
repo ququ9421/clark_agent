@@ -1,7 +1,7 @@
 ---
 name: test-case-generator
 description: 从需求文档、用户故事、设计稿（Figma/Pencil MCP）或 CDP 页面探索结果，使用 6 种测试设计方法生成结构化 BDD 测试用例，并输出强制的 Playwright Handoff JSON
-version: 1.2.0
+version: 1.3.0
 allowed_tools: [Read, Write, Bash, Grep, Glob]
 ---
 
@@ -352,9 +352,17 @@ allowed_tools: [Read, Write, Bash, Grep, Glob]
     "title": "正常登录流程",
     "source": "prd",
     "priority": "P0",
+    "criterionId": "AC-001",
+    "scenarioType": "positive",
+    "tags": ["@P0", "@smoke", "@regression"],
     "preconditions": ["用户已注册账号"],
     "setup": [
-      { "type": "navigate", "action": "navigate", "pomMethod": "goto", "data": { "url": "/login" } }
+      {
+        "type": "navigate",
+        "action": "navigate",
+        "pomMethod": "goto",
+        "data": { "url": "/login" }
+      }
     ],
     "uiElements": [
       {
@@ -362,12 +370,15 @@ allowed_tools: [Read, Write, Bash, Grep, Glob]
         "name": "邮箱",
         "action": "fill",
         "value": "test@example.com",
+        "dataType": "contact.email",
+        "dataVariant": "valid",
+        "i18nKey": "auth.emailPlaceholder",
         "locatorHint": "getByRole('textbox', { name: /邮箱/i })"
       }
     ],
     "assertions": [
       { "type": "url", "expected": "/dashboard" },
-      { "type": "visible", "target": "用户名称" }
+      { "type": "visible", "target": "用户名称", "i18nKey": "nav.userName" }
     ],
     "teardown": [],
     "timeout": null
@@ -375,11 +386,62 @@ allowed_tools: [Read, Write, Bash, Grep, Glob]
 ]
 ```
 
+**新增字段说明**：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `criterionId` | string \| null | 对应验收标准 ID（AC-001）；无对应时填 null |
+| `scenarioType` | string | `"positive"` \| `"negative"` \| `"boundary"` \| `"error"` \| `"blocked"` |
+| `tags` | string[] | `["@P0","@smoke","@regression","@full"]`，用于套件过滤 |
+| `setup[].scope` | string \| undefined | `"worker"`（跨 test 复用的耗时操作）；省略 = 默认 "test" |
+| `uiElements[].dataType` | string \| undefined | 语义数据类型（见 dataType 推断表） |
+| `uiElements[].dataVariant` | string \| undefined | 数据变体（设了 dataType 时必填） |
+| `uiElements[].i18nKey` | string \| undefined | 元素文本的 i18n key（来自消息文件） |
+| `assertions[].i18nKey` | string \| undefined | 断言期望文本的 i18n key |
+
+> `scenarioType: "blocked"` — 用于 Alignment Mode 中设计稿与需求文档对齐不完整、缺少足够信息无法生成完整测试步骤的用例；生成后需人工补充。
+
+**dataType 推断表**（script-generator 据此生成具体测试数据）：
+
+| 字段语义（name / label 关键词） | dataType | 常用 dataVariant |
+|--------------------------------|----------|----------------|
+| 手机号、mobile、phone | `contact.mobile` | `valid` / `invalid` / `boundary` |
+| 邮箱、email | `contact.email` | `valid` / `invalid` / `xss` |
+| 姓名、name、真实姓名 | `identity.name` | `valid` / `boundary` |
+| 密码、password、passwd | `account.password` | `valid` / `invalid` / `strong` / `boundary` |
+| 图片文件 | `file.image` | `valid` / `oversized` / `invalid_type` |
+| PDF 文件 | `file.pdf` | `valid` / `oversized` |
+| 视频文件 | `file.video` | `valid` / `oversized` |
+| 文本内容 | `text.content` | `valid` / `boundary` / `xss` |
+| 数字 / 金额 | `number.currency` | `valid` / `boundary` / `negative` |
+| 日期 | `datetime.date` | `valid` / `boundary` / `past` / `future` |
+
+**timeout 自动检测规则**：
+
+扫描每个 entry 的 `setup[].action` 和 `preconditions[]`，若包含以下关键词 → 自动设 `timeout: 600000`；否则保持 `timeout: null`：
+
+| 触发关键词 | 场景 |
+|-----------|------|
+| `AI 生成` / `AI 任务` / `AI 处理` | AI 内容生成 |
+| `等待生成` / `等待完成` / `wait for completion` | 异步等待 |
+| `流式输出` / `streaming` / `stream` | 流式响应 |
+| `批量处理` / `batch` | 批量操作 |
+| `训练` / `分析大文件` / `large file` | 计算密集型 |
+
+**setup[].scope 规则**：
+
+当满足以下**全部**条件时，设 `"scope": "worker"`；否则省略（默认 "test"）：
+1. 创建的数据为只读共享数据（Read 操作，不涉及写入）
+2. 初始化耗时 > 30s（AI 生成、大文件处理等）
+3. 多个 test 共享同一份前置数据
+
 **写入后验证（必须执行）**：
 1. 解析 JSON，确认是有效数组且长度 > 0
 2. entry 数量 === `## Merged Test Case List` 中的 TC 数量
 3. 每个 entry 必须有非空：`id`、`storyId`、`title`、`priority`、`assertions`（长度 >= 1）
 4. 验证失败 → 输出具体缺失字段和 entry ID，修复后重新写入
+
+完整字段规范、i18nKey 查找算法和需求变更更新策略见 `references/playwright-handoff-schema.md`。
 
 ---
 
@@ -437,6 +499,24 @@ allowed_tools: [Read, Write, Bash, Grep, Glob]
 - [ ] 每个预期结果验证业务语义（非"应该正常显示"）
 - [ ] `playwright-handoff-{slug}.json` 已生成且通过验证
 - [ ] P0:P1:P2 比例约为 2:4:3
+
+## Reference Files
+
+| 文件 | 内容 |
+|------|------|
+| `references/playwright-handoff-schema.md` | Handoff JSON 完整字段规范、dataType 推断表（完整版）、i18nKey 查找算法、timeout 关键词完整列表、需求变更 7 类产物更新策略 |
+| `references/design-methods.md` | 6 种设计方法详细步骤与完整示例（含 Markdown 表格和 Gherkin BDD 格式） |
+| `references/priority-framework.md` | 优先级决策树、验证规则、P0:P1:P2 比例校验方法 |
+| `references/input-extraction.md` | 输入源提取方法总览（索引） |
+| `references/input-extraction-requirements.md` | 需求文档（Markdown / Word / 纯文本）提取规则 |
+| `references/input-extraction-design-cdp.md` | Figma MCP / Pencil MCP / CDP baseline 提取规则 |
+| `references/best-practices.md` | 11 条最佳实践、7 种反模式、8 条调试技巧 |
+| `references/how-to-guides.md` | 实现指南总览（索引） |
+| `references/how-to-guides-typescript.md` | TypeScript 实现：story-parser、等价类生成器、Gherkin formatter、场景生成器 |
+| `references/how-to-guides-advanced.md` | 优先级计算器、可追溯性矩阵构建器、Python / Java 实现示例 |
+| `references/project-setup.md` | Cucumber / TypeScript 项目目录布局、UserStory / AcceptanceCriterion 接口定义 |
+
+---
 
 ## 注意事项
 
