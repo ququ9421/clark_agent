@@ -54,10 +54,10 @@ my_qa_agent/
 | Skill | 说明 |
 |-------|------|
 | `cdp-explorer` | 通过 Chrome DevTools Protocol 探查真实浏览器页面，建立状态流转图（State-Flow Graph），发现所有交互元素和状态，输出 `cdp-baseline-{slug}.json`；locatorHint 供 test-case-generator 和 playwright-script-generator 使用 |
-| `test-case-generator` | 用 6 种设计方法从需求生成 BDD 测试用例；TC ID 格式 `TC-{SOURCE}-{FEATURE}-{NNN}`；强制输出 Playwright Handoff JSON；支持 CDP baseline 模式 |
-| `excel-case-export` | 将 Markdown 测试用例导出为 Excel（.xlsx），含用例列表、详细用例、统计三个 Sheet |
+| `test-case-generator` | 用 6 种设计方法从需求文档、Figma/Pencil MCP 设计稿或 CDP baseline 生成 BDD 测试用例；支持 Alignment Mode（需求×设计稿交叉对齐）；Handoff JSON 含 scenarioType/criterionId/dataType 等完整字段；TC ID 格式 `TC-{SOURCE}-{FEATURE}-{NNN}` |
+| `excel-case-export` | 将 Markdown 测试用例导出为 Excel（.xlsx），含用例列表、详细用例、统计三个 Sheet；由 /qa-gen-cases 自动调用，或用户主动触发 |
 | `playwright-script-generator` | Handoff JSON → Page Object + Playwright spec；严格 1:1 映射；强断言质量校验；定位器优先级策略 |
-| `test-data-setup` | 为 E2E 测试生成前置数据基础设施；配置驱动（test-data.config.json）；并行创建 + 三级回退（env → 缓存 → UI 创建）；支持从已有 spec 反向抽象 fixture |
+| `test-data-setup` | 为 E2E 测试生成前置数据基础设施（data.setup.ts + fixtures.ts）；配置驱动（test-data.config.json）；并行创建 + 三级回退（env → 缓存 → UI 创建）+ AI 交互式阻断处理；支持从已有 spec 反向抽象 inline 数据为共享 fixture |
 | `mock-config-generator` | 扫描源码自动生成三层 Mock 配置；L1 MSW Handler（HTTP 拦截）/ L2 MockLanguageModelV2+Langfuse 录制回放（LLM）/ L3 Drizzle seed 脚本（数据层）；零侵入不修改业务代码 |
 | `unit-test-generator` | 4 种方法（等价类/边界值/分支路径覆盖/异常场景）生成单元测试；框架自动检测；8 种 Mock 策略 |
 | `api-test-generator` | 3 类测试（单端点/调用链/数据一致性）+ L1/L2/L3 三层 Mock；Schema 优先级检测 |
