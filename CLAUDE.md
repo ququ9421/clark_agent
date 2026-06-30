@@ -96,6 +96,11 @@ my_qa_agent/
 | `API_SPEC_PATH` | OpenAPI/Swagger spec 文件路径 |
 | `TEST_BASE_URL` | API 测试 base URL |
 | `API_MOCK_LEVEL` | Mock 层级：L1 / L2 / L3 / all |
+| `APP_LANGUAGES` | 被测应用支持的语言列表（逗号分隔，默认 `zh`，用于 i18n 测试） |
+| `PLAYWRIGHT_HEADLESS` | Playwright 是否无头模式（默认 `true`） |
+| `GITHUB_OWNER` / `GITHUB_REPO` | QA 平台自身的 GitHub 仓库（与 TARGET_GITHUB_* 区分，用于平台 CI/CD 操作） |
+| `LINEAR_API_KEY` | Linear API Token（可选，用于从 Issue 生成测试用例） |
+| `LINEAR_PROJECT_ID` / `LINEAR_TEAM_ID` | Linear 项目和团队 ID（配置 LINEAR_API_KEY 后生效） |
 
 ## 当前目标应用
 

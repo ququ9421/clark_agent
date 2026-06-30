@@ -1,3 +1,10 @@
+---
+name: excel-case-export
+description: 将 Markdown 格式的测试用例文档导出为 Excel（.xlsx）文件，包含用例列表、详细用例、统计三个 Sheet。由 /qa-gen-cases 自动调用，或用户主动触发。
+version: 1.0.0
+allowed_tools: [Read, Write, Bash]
+---
+
 # Skill: excel-case-export
 
 ## 用途
