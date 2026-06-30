@@ -53,7 +53,7 @@ my_qa_agent/
 ### Skills
 | Skill | 说明 |
 |-------|------|
-| `cdp-explorer` | 通过 CDP 连接浏览器探查页面状态，BFS 发现所有交互元素，输出含真实 locatorHint 的 cdp-baseline JSON |
+| `cdp-explorer` | 通过 Chrome DevTools Protocol 探查真实浏览器页面，建立状态流转图（State-Flow Graph），发现所有交互元素和状态，输出 `cdp-baseline-{slug}.json`；locatorHint 供 test-case-generator 和 playwright-script-generator 使用 |
 | `test-case-generator` | 用 6 种设计方法从需求生成 BDD 测试用例；TC ID 格式 `TC-{SOURCE}-{FEATURE}-{NNN}`；强制输出 Playwright Handoff JSON；支持 CDP baseline 模式 |
 | `excel-case-export` | 将 Markdown 测试用例导出为 Excel（.xlsx），含用例列表、详细用例、统计三个 Sheet |
 | `playwright-script-generator` | Handoff JSON → Page Object + Playwright spec；严格 1:1 映射；强断言质量校验；定位器优先级策略 |
