@@ -58,6 +58,7 @@ my_qa_agent/
 | `excel-case-export` | 将 Markdown 测试用例导出为 Excel（.xlsx），含用例列表、详细用例、统计三个 Sheet |
 | `playwright-script-generator` | Handoff JSON → Page Object + Playwright spec；严格 1:1 映射；强断言质量校验；定位器优先级策略 |
 | `test-data-setup` | 为 E2E 测试生成前置数据基础设施；配置驱动（test-data.config.json）；并行创建 + 三级回退（env → 缓存 → UI 创建）；支持从已有 spec 反向抽象 fixture |
+| `mock-config-generator` | 扫描源码自动生成三层 Mock 配置；L1 MSW Handler（HTTP 拦截）/ L2 MockLanguageModelV2+Langfuse 录制回放（LLM）/ L3 Drizzle seed 脚本（数据层）；零侵入不修改业务代码 |
 | `unit-test-generator` | 4 种方法（等价类/边界值/分支路径覆盖/异常场景）生成单元测试；框架自动检测；8 种 Mock 策略 |
 | `api-test-generator` | 3 类测试（单端点/调用链/数据一致性）+ L1/L2/L3 三层 Mock；Schema 优先级检测 |
 
