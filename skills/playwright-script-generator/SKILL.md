@@ -1,7 +1,7 @@
 ---
 name: playwright-script-generator
 description: 从 playwright-handoff-{slug}.json 生成 Page Object Model (.page.ts) 和 Playwright 测试脚本 (.test.ts)。严格 1:1 映射，每条 handoff entry 对应一个 test() 块，强制强断言校验。
-version: 1.0.0
+version: 1.1.0
 allowed_tools: [Read, Write, Grep, Glob]
 ---
 
@@ -15,19 +15,104 @@ allowed_tools: [Read, Write, Grep, Glob]
 
 ---
 
-## Phase 0：去重检查
+## Phase 0a：断言质量校验（生成 spec 后强制执行）
 
-在生成任何文件前，检查是否已有覆盖：
+> 生成每个 spec 文件后，扫描所有 `expect()` 调用，校验断言质量。
+> 只检查"存在性"而不验证业务语义的弱断言必须加强。
+
+| 模式 | 判定 | 处理方式 |
+|------|------|---------|
+| `expect(locator).toBeVisible()` 单独出现（非加载状态） | **弱断言** | 追加内容断言：`.toHaveText()`、`.toContainText()` 或语义校验 |
+| `expect(locator).toBeVisible()` 用于 loading spinner/skeleton | **OK** — 存在即业务含义 | 无需修改 |
+| `expect(locator).toHaveText('...')` 含具体期望值 | **强断言** ✅ | 无需修改 |
+| `expect(locator).toContainText('...')` | **强断言** ✅ | 无需修改 |
+| `expect(locator).toHaveAttribute('...', '...')` | **强断言** ✅ | 无需修改 |
+| `expect(page).toHaveURL('...')` | **强断言** ✅ | 无需修改 |
+| `expect(locator).toHaveCount(N)`（N > 0） | **强断言** ✅ | 无需修改 |
+| `expect(locator).toBeTruthy()` | **弱断言** | 一律替换为具体断言 |
+| `expect(locator).not.toBeVisible()` 用于错误/空状态 | **OK** — 不存在即业务含义 | 无需修改 |
+| `expect(locator).toBeHidden()` 用于缺失状态验证 | **语义正确** ✅ | 无需修改 |
+
+**校验流程**：Grep spec 中所有 `expect()` 调用。`toBeVisible()` 单独出现（非 spinner）→ 若 `assertions[].expected` 有值则改为 `toContainText()` / `toHaveText()`，无值则保留但加注释 `// TODO: 补充内容断言`。`toBeTruthy()` → 一律替换。输出：`"已加强 {specFile} 中 N 处弱断言"`。
+
+---
+
+## Phase 0b：去重检查（生成前防御性预检）
+
+在生成任何文件前，扫描已有脚本，避免重复生成：
 
 ```
 Glob("$QA_WORKSPACE_DIR/tests/e2e/specs/**/*.test.ts") → existingSpecs[]
+Glob("$QA_WORKSPACE_DIR/tests/e2e/pages/*.ts")         → existingPages[]
 
 对每条 handoff entry:
-  Grep("{entry.id}", existingSpecs)
+  Grep("{entry.id}", existingSpecs)           // 按 TC ID 精确匹配
+  Grep("{entry.title 关键词}", existingSpecs)  // 按标题关键词兜底匹配
   若已找到 → 跳过该 entry，记入 skipped[]
 
-若 functionList 全部跳过 → 输出"所有用例已有脚本覆盖，跳过生成" → 停止
+对目标页面的 POM：
+  若 existingPages 已有同名 POM → 复用，追加新方法，不重建
+
+若所有 entry 均跳过 → 输出"所有用例已有脚本覆盖，跳过生成" → 停止
 ```
+
+---
+
+## Phase 0c：测试数据自足性（每个 test() 强制执行）
+
+> **核心原则**：每个 `test()` 块必须完全自包含——自行准备数据、执行、验证、清理。
+> 任何测试都**不得**依赖其他测试的输出状态。
+
+**规则：**
+
+1. **禁止 hardcoded 数据 ID** — 不允许 `const TASK_ID = 'abc123'` 或 `process.env.E2E_TASK_ID ?? 'fallback'`
+2. **前置数据使用 worker-scope fixture** — 所有前置数据在 `fixtures.ts` 中以 worker-scope fixture 创建（`{ scope: 'worker', timeout: 360_000 }`），测试通过 fixture 参数解构获取。**禁止使用 `beforeAll`**（存在隐藏的 60s 超时限制，且阻止并行执行）
+3. **等待异步数据就绪** — 使用 `waitForResponse` 或轮询确认数据可用后再断言
+4. **唯一命名** — 始终使用 `Date.now()` 或 `crypto.randomUUID()` 后缀：
+   ```typescript
+   const fileName = `Test-Upload-${Date.now()}`
+   ```
+5. **POM 包含数据操作方法** — `createTask()`、`deleteTask()` 等写入 POM 而非 spec
+6. **`{timestamp}` 占位符** → 替换为 `Date.now()`
+7. **文件上传路径** 使用相对路径并加注释：
+   ```typescript
+   // 请在 tests/e2e/fixtures/files/ 下准备对应测试文件
+   await p.setInputFilesFileSelector('tests/e2e/fixtures/files/sample.pdf')
+   ```
+
+**前置数据需求校验（生成每个测试前强制执行）** — 根据操作关键词判断是否需要 `setup[]`：
+
+| 操作关键词 | 类型 | 需要 setup[]？ |
+|-----------|------|:------------:|
+| 创建、新增、上传、提交 | Create | 否 |
+| 查看、详情、预览、搜索、打开 | Read | **是** |
+| 编辑、修改、更新、重命名 | Update | **是** |
+| 删除、移除、取消、撤销 | Delete | **是** |
+| 下载、导出 | Download | **是** |
+| 列表、筛选、排序、分页 | List/Filter | **是** |
+| 导航、跳转 | Navigate | 否 |
+
+若类型要求 setup 但 `setup[]` 为空 → 从 `preconditions[]` 推断前置条件；两者均为空 → 标记错误，**不生成该 test**，输出：`"ERROR: {entry.id} 需要前置数据但 setup[] 为空"`。
+
+---
+
+## Phase 0d：测试数据类型解析（handoff 含 `dataType` 时执行）
+
+当 handoff 的 `uiElements[]` 条目包含 `dataType` 字段时，解析为具体的内联字面量写入 spec——**不引入工厂函数**。需要唯一性时追加 `Date.now()`。
+
+**常见类型映射：**
+
+| dataType | 生成值示例 |
+|----------|-----------|
+| `email` | `` `test-${Date.now()}@example.com` `` |
+| `username` | `` `testuser-${Date.now()}` `` |
+| `phone` | `` `138${Date.now().toString().slice(-8)}` `` |
+| `file.pdf` | `'tests/e2e/fixtures/files/sample.pdf'` |
+| `file.image` | `'tests/e2e/fixtures/files/sample.png'` |
+| `datetime.now` | `new Date().toISOString()` |
+| `text.unique` | `` `Test-${Date.now()}` `` |
+
+若 `dataType` 未知 → 用 `Date.now()` 生成占位值，并加注释：`// TODO: 替换为正确的 {dataType} 数据`。
 
 ---
 
@@ -211,31 +296,17 @@ test('[{id}] {title}',
 | `count` | `await expect(locator).toHaveCount({expected})` | |
 | `attribute` | `await expect(locator).toHaveAttribute('{attribute}', '{expected}')` | |
 
-### C.6 断言质量强制规则（对齐 qa_agent 0a 规范）
+### C.6 断言质量规则
 
-生成完 spec 后，扫描所有 `expect()` 调用执行质量校验：
-
-| 模式 | 判定 | 必须修复 |
-|------|------|---------|
-| `expect(locator).toBeVisible()` 单独出现 | **弱断言** | 若 assertions[].expected 有值 → 改为 `toContainText()` 或 `toHaveText()`；无值 → 保留但加注释"// TODO: 补充内容断言" |
-| `expect(locator).toBeTruthy()` | **弱断言** | 替换为具体断言 |
-| `toHaveText('{expected}')` | 强断言 ✅ | 无需修改 |
-| `toContainText('{expected}')` | 强断言 ✅ | 无需修改 |
-| `toHaveAttribute(...)` | 强断言 ✅ | 无需修改 |
-| `expect(locator).toBeHidden()` | 语义正确 ✅ | 缺失状态验证，无需修改 |
+> 完整规则见 **Phase 0a**。生成时直接按 0a 规则写入强断言；生成完成后统一执行 0a 校验扫描。
+> 核心：有 `assertions[].expected` 值时必须使用 `toHaveText()` 或 `toContainText()`，不能只写 `toBeVisible()`。
 
 ### C.7 测试数据自足规则
 
-- 每个 `test()` 以独立的 `goto()` 开始，不依赖其他 test 的页面状态
-- `{timestamp}` 占位符 → 替换为 `Date.now()`：
-  ```typescript
-  const taskName = `Test-Upload-${Date.now()}`
-  ```
-- 文件上传路径使用相对路径 + 注释说明：
-  ```typescript
-  // 请在 tests/e2e/fixtures/files/ 下准备对应测试文件
-  await p.setInputFilesFileSelector('tests/e2e/fixtures/files/sample.pdf')
-  ```
+> 完整规则见 **Phase 0c**。核心要求：
+> - 每个 `test()` 以独立的 `goto()` 开始，不依赖其他 test 的页面状态
+> - 需要前置数据时用 worker-scope fixture，**禁止 `beforeAll`**
+> - `{timestamp}` → `Date.now()`；文件路径用相对路径并加注释
 
 ---
 
@@ -281,15 +352,23 @@ export default defineConfig({
 
 生成完成后逐项确认：
 
+**前置校验（0a-0d）**
+- [ ] Phase 0a 已执行：spec 中无未修复的弱断言（无孤立的 `toBeVisible()`、无 `toBeTruthy()`）
+- [ ] Phase 0b 已执行：重复 TC ID 已跳过，已有 POM 已复用而非重建
+- [ ] Phase 0c 已执行：需要前置数据的测试已有 worker-scope fixture，无 `beforeAll`，无 hardcoded ID
+- [ ] Phase 0d 已执行：handoff 含 `dataType` 的字段已解析为具体字面量
+
+**文件结构**
 - [ ] POM 文件路径：`tests/e2e/pages/{slug}.page.ts`
 - [ ] Spec 文件路径：`tests/e2e/specs/{slug}-prd.test.ts`
 - [ ] 文件头含 `// source: prd`、`// handoff:` 两行注释
+
+**内容完整性**
 - [ ] `test.describe` 数量 = handoff 中 `storyId` 去重数量
 - [ ] `test()` 数量 = handoff 数组长度（减去 skipped 数量）
-- [ ] 所有 `expect()` 均为强断言（无未修复的弱断言）
-- [ ] 无 hardcoded 数据 ID（如直接写 `'abc123'`）
-- [ ] 已有 POM 未被重建（追加新方法，原有方法保留）
-- [ ] 文件上传用例生成了本地文件准备的注释
+- [ ] 所有 `expect()` 均为强断言
+- [ ] 无 hardcoded 数据 ID
+- [ ] 文件上传用例含本地文件准备注释
 - [ ] playwright.config.ts 存在（新建或已有均可）
 
 ---
