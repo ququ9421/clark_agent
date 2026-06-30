@@ -1,7 +1,7 @@
 ---
 name: test-case-generator
-description: 从需求文档、用户故事或 CDP 页面探索结果，使用 6 种测试设计方法生成结构化 BDD 测试用例，并输出强制的 Playwright Handoff JSON
-version: 1.1.0
+description: 从需求文档、用户故事、设计稿（Figma/Pencil MCP）或 CDP 页面探索结果，使用 6 种测试设计方法生成结构化 BDD 测试用例，并输出强制的 Playwright Handoff JSON
+version: 1.2.0
 allowed_tools: [Read, Write, Bash, Grep, Glob]
 ---
 
@@ -25,11 +25,98 @@ allowed_tools: [Read, Write, Bash, Grep, Glob]
 
 | 输入类型 | 识别方式 | 处理方式 |
 |---------|---------|---------|
-| 需求文档（PRD） | .md / .txt 文件路径 | 直接解析功能点和验收标准 |
-| 用户故事文本 | "作为...我希望...以便..." 格式 | 直接解析 |
-| CDP baseline JSON | page-baseline-{slug}.json | 从页面元素和交互推断用户故事 |
+| 需求文档（PRD/Markdown） | `.md` / `.txt` 文件路径，或包含标题/列表/表格的粘贴内容 | 解析 Markdown 结构，提取功能点和验收标准 |
+| 用户故事文本 | "作为...我希望...以便..." 格式 | 直接解析每条故事 |
+| 纯文本 / Word 需求 | 编号列表、"应/须/需"规范语句、粘贴散文 | **先转换为用户故事**，再解析 |
+| Figma 设计稿（MCP） | 用户提供 Figma URL 或节点 ID，且 Figma MCP 工具可用 | 调用 Figma MCP 工具提取组件、文本、交互标注 |
+| Pencil 原型（MCP） | 用户提供 Pencil 项目文件路径，且 Pencil MCP 工具可用 | 调用 Pencil MCP 工具提取页面和组件 |
+| **MD + 设计稿（对齐模式）** | 同时提供 `.md` 需求文档 **和** Figma URL / Pencil 文件 | **先对齐，再生成**（见下方 Alignment Mode） |
+| CDP baseline JSON | `cdp-baseline-{slug}.json` 或用户指定 URL 且 Chrome 正在运行 | 从页面元素和交互推断用户故事；有 baseline 直接复用，否则先调用 cdp-explorer |
 | Linear Issue | Issue 编号或文本 | 从 Issue 描述提取功能点 |
-| 混合输入 | 以上任意组合 | 分别提取后合并去重 |
+| 混合输入 | 以上任意组合（设计稿除外） | 分别提取后合并去重 |
+
+---
+
+## 多源输入处理规则
+
+### Alignment Mode（需求 + 设计稿对齐，优先级最高）
+
+当**同时**提供 Markdown 需求文档和 Figma/Pencil 设计文件时，**必须先对齐再生成**，不可直接跳到设计方法阶段。
+
+**Step 1 — 分别提取**
+
+| 来源 | 提取内容 |
+|------|---------|
+| 需求文档 | 功能点、验收标准、业务规则、数据字段 |
+| 设计工具 | 界面元素名称、占位符、状态变体（Normal/Hover/Disabled/Error）、交互流程 |
+
+**Step 2 — 交叉对比（Alignment Check）**
+
+| 情况 | 处理方式 |
+|------|---------|
+| 需求文档有，设计稿无 | 标记为"设计缺失"，用例加注 `⚠️ 设计稿未体现` |
+| 设计稿有，需求文档无 | 标记为"需求未覆盖"，询问用户是否生成对应用例 |
+| 两者一致 | 正常生成，优先使用设计稿的真实元素名称和 locatorHint |
+| 两者存在描述差异 | 以需求文档为准，在用例注释中标注设计差异 |
+
+**Step 3 — 生成对齐后的用例**
+- `uiElements[].name` 使用设计工具中提取的真实 UI 元素名称
+- `uiElements[].locatorHint` 优先使用设计工具标识符（Figma layer name → aria-label 推断）
+- 状态变体直接转化为边界值和错误场景用例
+
+---
+
+### Figma MCP 提取流程
+
+1. **调用 Figma MCP 工具**获取设计数据（组件树、文本、交互标注）
+2. **提取关键信息**：
+
+   | 设计元素 | 映射到用例字段 |
+   |---------|--------------|
+   | 页面/Frame 标题 | 功能域 `{FEATURE}` |
+   | 按钮/链接文本 | `uiElements[].name`、`locatorHint` |
+   | 输入框占位符 / Label | 表单字段识别、等价类输入值 |
+   | 状态变体（Disabled/Error/Empty） | 边界值分析 + 错误猜测用例 |
+   | 条件显示组件（Hidden layer） | 条件渲染场景、状态转换用例 |
+
+3. **降级处理**：Figma MCP 工具不可用 → 要求用户提供截图或元素清单，或切换为纯文档模式
+
+---
+
+### Pencil MCP 提取流程
+
+1. **调用 Pencil MCP 工具**获取页面列表和组件数据
+2. **提取规则**：与 Figma 相同（页面→功能域、组件→uiElements、状态→场景用例）
+3. **降级处理**：Pencil MCP 不可用 → 要求用户导出为 PNG/HTML 后手动描述元素
+
+---
+
+### Chrome CDP 实时页面模式
+
+当用户提供目标 URL 且 Chrome 正在运行（无需求文档）时：
+
+1. **检查是否已有 baseline**：Glob `tests/e2e/test-cases/generated/cdp-baseline-{slug}.json`
+   - 已有 → 直接复用，不重复探查
+   - 不存在 → 先调用 `cdp-explorer` Skill 生成 baseline
+2. **从 baseline 推断用户故事**：
+   - 每个可交互区域 → 一个用户故事
+   - 元素状态（enabled/disabled/expanded）→ 前置条件
+   - 表单字段 → 输入等价类和边界值
+3. **locatorHint 直接来自 CDP 探查结果**，准确率最高；`source` 字段设为 `cdp`
+
+---
+
+### 纯文本 / Word 需求转换规则
+
+遇到以下格式时，先转换为用户故事再进入 Phase B：
+
+| 原始格式 | 转换规则 |
+|---------|---------|
+| `1. 系统应支持用户上传文件` | → `作为用户，我希望上传文件，以便保存数据` |
+| `功能要求：密码须包含大小写字母` | → `作为用户，我希望设置包含大小写的密码，以便通过安全验证` |
+| `必须支持批量操作` | → `作为用户，我希望批量操作多条记录，以便提高效率` |
+
+转换后按用户故事模式进入标准流程。
 
 ---
 
@@ -50,10 +137,34 @@ allowed_tools: [Read, Write, Bash, Grep, Glob]
 
 ### Phase B：解析输入
 
-1. 读取输入源内容
+**Step B.1 — 输入源分发**
+
+根据识别到的输入类型，选择对应处理路径（可并行）：
+
+```
+同时有 .md 需求 + Figma/Pencil？
+  → Alignment Mode（见"多源输入处理规则"）
+
+只有 Figma URL / Pencil 文件？
+  → Figma/Pencil MCP 提取流程
+
+只有目标 URL 且 Chrome 运行中（无文档）？
+  → Chrome CDP 实时页面模式
+
+只有纯文本 / Word 内容？
+  → 先转换为用户故事，再执行 Step B.2
+
+其他（PRD 文档 / 用户故事 / Issue / 混合）？
+  → 直接执行 Step B.2
+```
+
+**Step B.2 — 功能点提取**
+
+1. 读取已处理（或直接输入）的内容
 2. 提取每个**可测试的功能点**（用户能做什么、系统如何响应）
 3. 识别关键数据字段（输入项、状态值、边界值）
 4. 确定功能域名称（用于 TC ID 中的 `{FEATURE}` 部分，大写英文）
+5. 如来自设计工具，同步收集真实 UI 元素名称和 locatorHint 映射表，供 Phase H 写入 handoff
 
 ---
 
@@ -309,6 +420,14 @@ allowed_tools: [Read, Write, Bash, Grep, Glob]
 ## 自检清单
 
 生成完成后，逐项确认：
+
+**多源输入（按实际输入源勾选）**
+- [ ] Alignment Mode：已执行交叉对比，差异已标注 `⚠️` 或询问用户
+- [ ] Figma/Pencil MCP：UI 元素名称和 locatorHint 已写入 handoff `uiElements[]`
+- [ ] CDP 模式：已复用或重新生成 `cdp-baseline-{slug}.json`，`source` 字段设为 `cdp`
+- [ ] 纯文本/Word：已先转换为用户故事再生成
+
+**内容完整性**
 - [ ] 输出文件包含全部 8 个 section（Method 1-6 + Merged + 来源头部）
 - [ ] 不适用的方法写了 `N/A` + 原因（不能静默跳过）
 - [ ] 至少 3 种方法产出了实际用例
