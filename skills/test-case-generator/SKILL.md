@@ -104,6 +104,8 @@ allowed_tools: [Read, Write, Bash, Grep, Glob]
    - 表单字段 → 输入等价类和边界值
 3. **locatorHint 直接来自 CDP 探查结果**，准确率最高；`source` 字段设为 `cdp`
 
+> Figma MCP 节点树遍历、Pencil MCP shapes 提取、CDP baseline 字段映射的完整规则见 `references/input-extraction-design-cdp.md`。
+
 ---
 
 ### 纯文本 / Word 需求转换规则
@@ -117,6 +119,8 @@ allowed_tools: [Read, Write, Bash, Grep, Glob]
 | `必须支持批量操作` | → `作为用户，我希望批量操作多条记录，以便提高效率` |
 
 转换后按用户故事模式进入标准流程。
+
+> Markdown/PRD 结构解析、criterionId 映射、{FEATURE} 推断规则、Linear Issue 优先级映射见 `references/input-extraction-requirements.md`。
 
 ---
 
@@ -503,6 +507,8 @@ allowed_tools: [Read, Write, Bash, Grep, Glob]
 - [ ] 每个预期结果验证业务语义（非"应该正常显示"）
 - [ ] `playwright-handoff-{slug}.json` 已生成且通过验证
 - [ ] P0:P1:P2 比例约为 2:4:3
+
+> 11 条最佳实践、7 种反模式、8 条调试技巧见 `references/best-practices.md`。
 
 ## Reference Files
 
