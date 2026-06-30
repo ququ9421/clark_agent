@@ -210,6 +210,8 @@ allowed_tools: [Read, Write, Bash, Grep, Glob]
 - 重点：空值提交、特殊字符注入、网络中断、并发操作、权限边界、重复提交
 - 示例：表单提交时断网、连续双击提交按钮、粘贴超长文本
 
+> 每种方法的详细步骤、完整 Markdown 示例和 Gherkin BDD 示例见 `references/design-methods.md`。
+
 ---
 
 ### Phase D：前置条件与测试数据自给自足
@@ -246,6 +248,8 @@ allowed_tools: [Read, Write, Bash, Grep, Glob]
 | **P2** | 边缘场景、兼容性、非关键 UX 细节 | 特殊字符输入、超长文本截断 |
 
 目标比例：**P0 约 15-20%，P1 约 40-50%，P2 约 30-40%**
+
+> 优先级决策树、常见误判场景和比例校验方法见 `references/priority-framework.md`。
 
 ---
 
